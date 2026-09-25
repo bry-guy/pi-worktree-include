@@ -1,0 +1,8 @@
+[tasks.check]
+run = "npm run check"
+
+[tasks.release]
+description = "Check and publish the current package version to npm"
+depends = ["check"]
+raw = true
+run = "npm publish --access public"
