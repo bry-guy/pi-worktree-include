@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { lstat, mkdtemp, mkdir, readFile, readlink, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
@@ -64,22 +64,64 @@ test("preserves destinations including tracked files deleted from target", async
   await assert.rejects(readFile(join(target, "tracked.txt")), { code: "ENOENT" });
 });
 
-test("rejects unrelated repos, symlinked source files, symlinked target parents", async t => {
+test("rejects unrelated repos and symlinked target parents", async t => {
   const { dir, source, target } = await fixtures(t);
   const other = join(dir, "other");
   await mkdir(other);
   git(other, "init", "-q");
   await assert.rejects(copyIgnored(source, other), /same repository/);
-  await writeFile(join(source, ".worktreeinclude"), "*.env\nprivate/*\n");
-  await writeFile(join(dir, "outside.env"), "secret");
-  await symlink(join(dir, "outside.env"), join(source, "outside.env"));
-  await assert.rejects(copyIgnored(source, target), /Source symlink is not supported/);
-  await rm(join(source, "outside.env"));
+  await writeFile(join(source, ".worktreeinclude"), "private/*\n");
   await mkdir(join(source, "private"));
   await writeFile(join(source, "private", "inside.env"), "source");
   await symlink(dir, join(target, "private"));
   await assert.rejects(copyIgnored(source, target), /Destination parent is not a directory/);
   await assert.rejects(readFile(join(dir, "inside.env")), { code: "ENOENT" });
+});
+
+test("preserves file symlink targets inside and outside the checkout", async t => {
+  const { dir, source, target } = await fixtures(t);
+  await writeFile(join(source, ".worktreeinclude"), "*.env\n");
+  await writeFile(join(source, "local.env"), "internal");
+  await writeFile(join(dir, "shared.env"), "external");
+  await symlink("local.env", join(source, "linked.env"));
+  await symlink(join(dir, "shared.env"), join(source, "shared.env"));
+  await symlink("../shared.env", join(source, "relative.env"));
+  await symlink("local.env", join(source, "existing.env"));
+  await symlink("untouched.env", join(target, "existing.env"));
+  const result = await copyIgnored(source, target);
+  assert.deepEqual(result.copied.sort(), ["linked.env", "local.env", "relative.env", "shared.env"]);
+  assert.deepEqual(result.skipped, ["existing.env"]);
+  assert.equal((await lstat(join(target, "linked.env"))).isSymbolicLink(), true);
+  assert.equal(await realpath(join(target, "linked.env")), await realpath(join(source, "local.env")));
+  assert.equal(await readlink(join(target, "shared.env")), join(dir, "shared.env"));
+  assert.equal(await realpath(join(target, "relative.env")), await realpath(join(source, "relative.env")));
+  await writeFile(join(dir, "shared.env"), "updated");
+  assert.equal(await readFile(join(target, "relative.env"), "utf8"), "updated");
+  assert.equal(await readlink(join(target, "existing.env")), "untouched.env");
+  assert.deepEqual((await copyIgnored(source, target)).copied, []);
+});
+
+test("keeps relative symlink traversal through other symlinks", async t => {
+  const { source, target } = await fixtures(t);
+  await writeFile(join(source, ".worktreeinclude"), "/linked.env\n");
+  await mkdir(join(source, "files", "nested"), { recursive: true });
+  await writeFile(join(source, "files", "secret.env"), "linked");
+  await symlink("files/nested", join(source, "alias"));
+  await symlink("alias/../secret.env", join(source, "linked.env"));
+  assert.deepEqual((await copyIgnored(source, target)).copied, ["linked.env"]);
+  assert.equal((await lstat(join(target, "linked.env"))).isSymbolicLink(), true);
+  assert.equal(await realpath(join(target, "linked.env")), await realpath(join(source, "linked.env")));
+});
+
+test("reports dangling file symlinks and skips directory symlinks", async t => {
+  const { source, target } = await fixtures(t);
+  await writeFile(join(source, ".worktreeinclude"), "*.env\n");
+  await symlink("missing.env", join(source, "broken.env"));
+  await assert.rejects(copyIgnored(source, target), /Dangling source symlink: broken.env/);
+  await rm(join(source, "broken.env"));
+  await mkdir(join(source, "folder.env"));
+  await symlink("folder.env", join(source, "directory.env"));
+  assert.deepEqual((await copyIgnored(source, target)).copied, []);
 });
 
 test("does not recreate files or ancestors tracked only in target", async t => {

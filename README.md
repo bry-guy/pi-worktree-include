@@ -21,4 +21,4 @@ After creating a worktree, ask Pi to populate its local files, or run:
 /worktree-include <target-worktree> [source-checkout]
 ```
 
-The source defaults to your current checkout. Only files that match `.worktreeinclude` **and** are Git-ignored are copied; existing target files are never overwritten. No manifest means no copies. Source symlinks cause an error. This tool does not create worktrees or change Pi's working directory.
+The source defaults to your current checkout. Only files that match `.worktreeinclude` **and** are Git-ignored are copied; existing target files are never overwritten. No manifest means no copies. File symlinks (even to paths outside the checkout) remain symlinks to the same target; dangling links cause an error, and directory symlinks are not copied. This tool does not create worktrees or change Pi's working directory.
