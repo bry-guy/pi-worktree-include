@@ -1,29 +1,24 @@
 # pi-worktree-include
 
-A Pi extension and skill for copying selected local files into an existing Git worktree. It does not create worktrees or change Pi's working directory.
+Bring your local, Git-ignored files into a new worktree without copying everything. This Pi extension uses the same [`.worktreeinclude` convention as Claude Code](https://code.claude.com/docs/en/worktrees#copy-gitignored-files-into-worktrees).
 
-Install from Git:
+Install from Git (npm: `pi install npm:pi-worktree-include`, once published):
 
 ```sh
 pi install git:github.com/bry-guy/pi-worktree-include
 ```
 
-Add `.worktreeinclude` at the source checkout's repo root using Gitignore patterns:
+In your repository root, add `.worktreeinclude` with Gitignore-style patterns:
 
 ```gitignore
 .env.local
 config/local.json
 ```
 
-Only files that match the manifest **and** are Git-ignored in the source checkout are copied. Tracked files are never copied. Unlike pi-ez-worktree's includes, these are independent copies, not symlinks; paths outside the source checkout are not supported. Source symlinks are rejected; nested repositories are not copied. The manifest is optional: without it, nothing is copied. Existing target files are left untouched, and target-tracked paths are never replaced. The skill tells the agent to run the tool after it creates a worktree; no Git hooks or transparent tool routing are installed.
+After creating a worktree, ask Pi to populate its local files, or run:
 
-Ask Pi to create a worktree and populate its ignored files, or explicitly run `/worktree-include <target-worktree> [source-checkout]`. The model-callable `worktree_include` tool accepts `target` and optional `source`; omitted source defaults to the session checkout. The target must be a separate worktree of the same Git repository. The command accepts paths without spaces; for paths with spaces, use the model-callable tool.
-
-To test locally without changing Pi's global configuration:
-
-```sh
-npm run check
-pi -e ~/dev/pi-worktree-include
+```text
+/worktree-include <target-worktree> [source-checkout]
 ```
 
-For the optional registered-tool callback test, set `PI_CODING_AGENT_ROOT` to your installed `@earendil-works/pi-coding-agent` package directory before running `npm run check`. Without it, that test is skipped. The CLI integration test requires `pi` on `PATH`.
+The source defaults to your current checkout. Only files that match `.worktreeinclude` **and** are Git-ignored are copied; existing target files are never overwritten. No manifest means no copies. Source symlinks cause an error. This tool does not create worktrees or change Pi's working directory.

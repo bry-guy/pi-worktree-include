@@ -1,8 +1,10 @@
 {
   "name": "pi-worktree-include",
   "version": "0.1.0",
+  "description": "Copy selected Git-ignored files into Pi worktrees with .worktreeinclude",
   "type": "module",
   "license": "MIT",
+  "files": ["extensions/", "lib/", "skills/"],
   "keywords": ["pi-package", "pi", "git", "worktree"],
   "repository": { "type": "git", "url": "git+https://github.com/bry-guy/pi-worktree-include.git" },
   "homepage": "https://github.com/bry-guy/pi-worktree-include#readme",
