@@ -1,0 +1,16 @@
+{
+  "name": "pi-worktree-include",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "keywords": ["pi-package", "pi", "git", "worktree"],
+  "repository": { "type": "git", "url": "git+https://github.com/bry-guy/pi-worktree-include.git" },
+  "homepage": "https://github.com/bry-guy/pi-worktree-include#readme",
+  "bugs": { "url": "https://github.com/bry-guy/pi-worktree-include/issues" },
+  "peerDependencies": { "typebox": "*" },
+  "pi": {
+    "extensions": ["./extensions/worktree-include.js"],
+    "skills": ["./skills/worktree-include"]
+  },
+  "scripts": { "check": "node --check extensions/worktree-include.js && node --check lib/copy-ignored.js && node --test" }
+}
