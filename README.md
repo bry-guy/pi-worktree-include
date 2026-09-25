@@ -25,4 +25,4 @@ The source defaults to your current checkout. Only files that match `.worktreein
 
 ## Release
 
-Update the version in `package.json` for each subsequent release, then run `mise run release` (or `mise release`) from this repository. It runs the checks and publishes to npm; approve npm's browser prompt if asked.
+Update the version in `package.json` for each subsequent release, then run `mise run release` (or `mise release`) from this repository. It runs the checks, refuses to publish an existing version (or if npm cannot confirm availability), and publishes to npm; approve npm's browser prompt if asked.

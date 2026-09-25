@@ -5,4 +5,7 @@ run = "npm run check"
 description = "Check and publish the current package version to npm"
 depends = ["check"]
 raw = true
-run = "npm publish --access public"
+run = [
+  "node scripts/check-release-version.js",
+  "npm publish --access public",
+]
