@@ -2,10 +2,10 @@
 
 Bring your local, Git-ignored files into a new worktree without copying everything. This Pi extension uses the same [`.worktreeinclude` convention as Claude Code](https://code.claude.com/docs/en/worktrees#copy-gitignored-files-into-worktrees).
 
-Install from Git (npm: `pi install npm:pi-worktree-include`, once published):
+Install with Pi:
 
 ```sh
-pi install git:github.com/bry-guy/pi-worktree-include
+pi install npm:pi-worktree-include
 ```
 
 In your repository root, add `.worktreeinclude` with Gitignore-style patterns:
